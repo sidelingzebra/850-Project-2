@@ -20,3 +20,25 @@ print("Validation Images:", image_count)
 X_test=pathlib.Path('Data/test')
 image_count = len(list(X_test.glob('*/*.jpg')))
 print("Test Images:", image_count)
+
+#Creating TFs from relative locations
+train_ds = keras.preprocessing.image_dataset_from_directory(
+    directory='Data/train/',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=32,
+    image_size=(500, 500))
+
+test_ds = keras.preprocessing.image_dataset_from_directory(
+    directory='Data/test/',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=32,
+    image_size=(500, 500))
+
+valid_ds = keras.preprocessing.image_dataset_from_directory(
+    directory='Data/valid/',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=32,
+    image_size=(500, 500))
