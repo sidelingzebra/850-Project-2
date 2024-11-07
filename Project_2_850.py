@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pathlib
 
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 
 import keras
@@ -47,8 +47,11 @@ valid_ds = keras.preprocessing.image_dataset_from_directory(
     batch_size=32,
     image_size=(500, 500))
 
+#Confirming Class Names
+class_names = train_ds.class_names
+print(class_names)
 
-
+#Starting the model
 model = Sequential()
 
 #Rescale Layer
@@ -69,7 +72,6 @@ model.add(layers.Dense(32, activation='relu'))
 model.add(layers.Dense(3, activation='softmax'))
 
 
-
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
@@ -78,3 +80,24 @@ history = model.fit(train_ds, epochs=1, batch_size=32,validation_data=valid_ds)
 
 test_loss, test_acc = model.evaluate(test_ds)
 print(f'Test accuracy: {test_acc:.4f}')
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Plot training & validation loss
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.show()
