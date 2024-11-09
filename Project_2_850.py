@@ -57,8 +57,16 @@ model = Sequential()
 #Rescale Layer
 model.add(layers.Rescaling(1./255, input_shape=(500, 500, 3)))
 
-#Conv2D & Pooling Layer
+#Conv2D & Pooling Layer 1
 model.add(layers.Conv2D(16, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+
+#Conv2D & Pooling Layer 2
+model.add(layers.Conv2D(64, (3, 3), activation='leaky_relu'))
+model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+
+#Conv2D & Pooling Layer 3
+model.add(layers.Conv2D(96, (3, 3), activation='relu'))
 model.add(layers.MaxPooling2D(pool_size=(2, 2)))
 
 #Flatten Layer
