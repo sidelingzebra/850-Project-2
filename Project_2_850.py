@@ -6,6 +6,7 @@ import pathlib
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
+from tensorflow.keras import regularizers
 
 import keras
 
@@ -72,15 +73,24 @@ model.add(layers.MaxPooling2D(pool_size=(2, 2)))
 #Flatten Layer
 model.add(layers.Flatten())
 
-#Dense Layer 1
-model.add(layers.Dense(32, activation='relu'))
+#Dropout Layer 1
+model.add(layers.Dropout(0.25))
 
+#Dense Layer 1
+model.add(layers.Dense(128, activation='relu',
+                       kernel_regularizer=regularizers.l2(0.01)))
+
+#Dropout Layer 2
+model.add(layers.Dropout(0.5))
 
 #Final Dense Layer
 model.add(layers.Dense(3, activation='softmax'))
 
+#Optimizer
+opti = keras.optimizers.Adam(0.0001)
 
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
+#Compiler
+model.compile(optimizer=opti, loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
 
