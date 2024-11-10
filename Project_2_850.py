@@ -2,102 +2,122 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import pathlib
+import os
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
+from tensorflow.keras.optimizers import SGD
 
 import keras
 
+import tensorboard
 
-#Getting Train Image Count
-X_train=pathlib.Path()/'Data'/'train'
-image_count= len(list(X_train.glob('*/*.jpg')))
-print("Train Images:",image_count)
+import datetime
 
-#Getting Validation Image Count
-X_valid=pathlib.Path()/'Data'/'valid'
-image_count = len(list(X_valid.glob('*/*.jpg')))
-print("Validation Images:", image_count)
 
-#Getting Test Image Count
-X_test=pathlib.Path('Data/test')
-image_count = len(list(X_test.glob('*/*.jpg')))
-print("Test Images:", image_count)
+batch_size=32
+img_height = 500
+img_width = 500
+epochs=5
+num_classes = 3
+
 
 #Creating TFs from relative locations
 train_ds = keras.preprocessing.image_dataset_from_directory(
     directory='Data/train/',
     labels='inferred',
     label_mode='categorical',
-    batch_size=32,
-    image_size=(500, 500))
-
-test_ds = keras.preprocessing.image_dataset_from_directory(
-    directory='Data/test/',
-    labels='inferred',
-    label_mode='categorical',
-    batch_size=32,
-    image_size=(500, 500))
+    seed=123,
+    batch_size=batch_size,
+    image_size=(img_height, img_width))
 
 valid_ds = keras.preprocessing.image_dataset_from_directory(
     directory='Data/valid/',
     labels='inferred',
     label_mode='categorical',
-    batch_size=32,
-    image_size=(500, 500))
+    batch_size=batch_size,
+    image_size=(img_height, img_width))
 
-#Confirming Class Names
+test_ds = keras.preprocessing.image_dataset_from_directory(
+    directory='Data/test/',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=batch_size,
+    image_size=(img_height, img_width))
+
+
 class_names = train_ds.class_names
 print(class_names)
 
-#Starting the model
-model = Sequential()
 
-#Rescale Layer
-model.add(layers.Rescaling(1./255, input_shape=(500, 500, 3)))
-
-#Conv2D & Pooling Layer 1
-model.add(layers.Conv2D(16, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-
-#Conv2D & Pooling Layer 2
-model.add(layers.Conv2D(64, (3, 3), activation='leaky_relu'))
-model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-
-#Conv2D & Pooling Layer 3
-model.add(layers.Conv2D(96, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-
-#Flatten Layer
-model.add(layers.Flatten())
-
-#Dropout Layer 1
-model.add(layers.Dropout(0.25))
-
-#Dense Layer 1
-model.add(layers.Dense(128, activation='relu',
-                       kernel_regularizer=regularizers.l2(0.01)))
-
-#Dropout Layer 2
-model.add(layers.Dropout(0.5))
-
-#Final Dense Layer
-model.add(layers.Dense(3, activation='softmax'))
-
-#Optimizer
-opti = keras.optimizers.Adam(0.0001)
-
-#Compiler
-model.compile(optimizer=opti, loss='categorical_crossentropy', metrics=['accuracy'])
-model.summary()
+for image_batch, labels_batch in train_ds:
+  print(image_batch.shape)
+  print(labels_batch.shape)
+  break
 
 
-history = model.fit(train_ds, epochs=1, batch_size=32,validation_data=valid_ds)
+#Normalize
+normalization_layer = tf.keras.layers.Rescaling(1./255)
+train_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(train_ds))
+valid_ds = valid_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(valid_ds))
+test_ds = test_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(test_ds))
 
-test_loss, test_acc = model.evaluate(test_ds)
-print(f'Test accuracy: {test_acc:.4f}')
+
+AUTOTUNE = tf.data.AUTOTUNE
+train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
+valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+
+
+#Early Exit
+callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
+
+
+
+model = tf.keras.Sequential([
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+
+
+
+  
+  tf.keras.layers.Flatten(),
+  tf.keras.layers.Dense(256, activation='relu'),
+  tf.keras.layers.Dense(num_classes,activation='softmax')
+])
+
+initial_learning_rate = 0.1
+lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate,
+    decay_steps=100000,
+    decay_rate=0.96,
+    staircase=True)
+
+model.compile(
+  optimizer=keras.optimizers.SGD(learning_rate=lr_schedule),
+  loss='categorical_crossentropy',
+  metrics=['accuracy'])
+
+
+
+logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
+
+history=model.fit(
+  train_ds,
+  validation_data=valid_ds,
+  epochs=epochs,callbacks=[callback]
+)
+
 
 plt.figure(figsize=(12, 4))
 
@@ -119,3 +139,15 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.show()
+
+model.save("Model_3.keras")
+
+
+
+
+
+
+test_loss, test_acc = model.evaluate(test_ds)
+print(f'Test accuracy: {test_acc:.4f}')
+
+
