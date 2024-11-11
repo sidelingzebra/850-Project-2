@@ -9,6 +9,7 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
 from tensorflow.keras.optimizers import SGD
+from keras.layers import LeakyReLU
 
 import keras
 
@@ -20,7 +21,7 @@ import datetime
 batch_size=32
 img_height = 500
 img_width = 500
-epochs=5
+epochs=10
 num_classes = 3
 
 
@@ -80,34 +81,39 @@ callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
 
 
 model = tf.keras.Sequential([
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
   tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
   tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.Conv2D(32, (3,3), activation=keras.layers.LeakyReLU(alpha=0.01)),
+  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
   tf.keras.layers.MaxPooling2D(),
 
 
 
   
   tf.keras.layers.Flatten(),
-  tf.keras.layers.Dense(256, activation='relu'),
+  tf.keras.layers.Dense(64, activation='relu',
+                        kernel_regularizer=regularizers.l2(0.001)),
   tf.keras.layers.Dense(num_classes,activation='softmax')
 ])
 
-initial_learning_rate = 0.1
-lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate,
-    decay_steps=100000,
-    decay_rate=0.96,
-    staircase=True)
+# keras.layers.LeakyReLU(alpha=0.01)
+
+# initial_learning_rate = 0.1
+# lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+#     initial_learning_rate,
+#     decay_steps=100000,
+#     decay_rate=0.96,
+#     staircase=True)
 
 model.compile(
-  optimizer=keras.optimizers.SGD(learning_rate=lr_schedule),
+  optimizer='Adam',
   loss='categorical_crossentropy',
   metrics=['accuracy'])
 
-
+# keras.optimizers.SGD(learning_rate=lr_schedule)
 
 logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
@@ -140,7 +146,7 @@ plt.legend()
 
 plt.show()
 
-model.save("Model_3.keras")
+model.save("Model_5.keras")
 
 
 
