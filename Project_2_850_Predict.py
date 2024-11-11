@@ -38,8 +38,6 @@ model = keras.models.load_model("Model_6.keras")
 
 
 
-test_loss, test_acc = model.evaluate(test_ds)
-print(f'Test accuracy: {test_acc:.4f}')
 
 
 img1=keras.utils.load_img(path='Data/test/crack/test_crack.jpg',
