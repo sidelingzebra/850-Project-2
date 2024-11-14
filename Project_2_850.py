@@ -84,26 +84,23 @@ valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
 model = tf.keras.Sequential([
   tf.keras.layers.Resizing(250,250),
   
-  tf.keras.layers.RandomRotation(0.1),
-  tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
-  tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  
-  tf.keras.layers.Dropout(0.2),
-  
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  
-   # tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
-   # tf.keras.layers.MaxPooling2D(),
 
-  tf.keras.layers.Dropout(0.2),
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(), 
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+
+  
+
+
+
 
   
   tf.keras.layers.Flatten(),
-  tf.keras.layers.Dense(128, activation='relu',
+  tf.keras.layers.Dropout(0.25),
+  tf.keras.layers.Dense(512, activation='relu',
                         kernel_regularizer=regularizers.l2(0.01)),
   tf.keras.layers.Dropout(0.25),
   tf.keras.layers.Dense(num_classes,activation='softmax')
