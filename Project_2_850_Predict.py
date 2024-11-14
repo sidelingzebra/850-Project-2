@@ -18,8 +18,7 @@ import keras
 batch_size=32
 img_height = 500
 img_width = 500
-epochs=10
-num_classes = 3
+
 
 test_ds = keras.preprocessing.image_dataset_from_directory(
     directory='Data/test/',
@@ -31,7 +30,7 @@ test_ds = keras.preprocessing.image_dataset_from_directory(
 class_names = test_ds.class_names
 print(class_names)
 
-model = keras.models.load_model("Model_6.keras")
+model = keras.models.load_model("Model_9.keras")
 
 
 
