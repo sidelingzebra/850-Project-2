@@ -16,12 +16,13 @@ import keras
 import tensorboard
 
 import datetime
+import keras_tuner
 
 
 batch_size=32
 img_height = 500
 img_width = 500
-epochs=10
+epochs=12
 num_classes = 3
 
 
@@ -76,30 +77,39 @@ valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 
 #Early Exit
-callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
+# callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
 
 
 
 model = tf.keras.Sequential([
-  tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(32, (3,3), activation=keras.layers.LeakyReLU(alpha=0.01)),
-  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Resizing(250,250),
+  
+  tf.keras.layers.RandomRotation(0.1),
+  tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
   tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
   tf.keras.layers.MaxPooling2D(),
+  
+  tf.keras.layers.Dropout(0.2),
+  
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(),
+  
+   # tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+   # tf.keras.layers.MaxPooling2D(),
 
-
+  tf.keras.layers.Dropout(0.2),
 
   
   tf.keras.layers.Flatten(),
-  tf.keras.layers.Dense(64, activation='relu',
-                        kernel_regularizer=regularizers.l2(0.001)),
+  tf.keras.layers.Dense(128, activation='relu',
+                        kernel_regularizer=regularizers.l2(0.01)),
+  tf.keras.layers.Dropout(0.25),
   tf.keras.layers.Dense(num_classes,activation='softmax')
 ])
 
-# keras.layers.LeakyReLU(alpha=0.01)
+
 
 # initial_learning_rate = 0.1
 # lr_schedule = keras.optimizers.schedules.ExponentialDecay(
@@ -121,9 +131,8 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir, histogram_
 history=model.fit(
   train_ds,
   validation_data=valid_ds,
-  epochs=epochs,callbacks=[callback]
-)
-
+  epochs=epochs)
+# callbacks=[callback]
 
 plt.figure(figsize=(12, 4))
 
@@ -146,14 +155,10 @@ plt.legend()
 
 plt.show()
 
-model.save("Model_5.keras")
+model.save("Model_9.keras")
 
 
 
 
-
-
-test_loss, test_acc = model.evaluate(test_ds)
-print(f'Test accuracy: {test_acc:.4f}')
 
 
